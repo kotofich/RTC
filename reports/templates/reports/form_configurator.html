@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block title %}Конфигуратор форм{% endblock %}
+
+{% block content %}
+<section class="card">
+    <h1>Конфигуратор форм</h1>
+    <p class="muted">
+        Доступно администраторам. Здесь можно добавить тип формы, сущности
+        внутри типа и отдельные поля как для формы, так и для сущностей.
+    </p>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create_report_type">
+        {% if report_type_form.non_field_errors %}
+            <div class="errors">{{ report_type_form.non_field_errors|join:", " }}</div>
+        {% endif %}
+        {% for field in report_type_form %}
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+                <div class="errors">{{ field.errors|join:", " }}</div>
+            {% endif %}
+        {% endfor %}
+        <button type="submit">Сохранить тип формы</button>
+    </form>
+</section>
+
+<section class="card">
+    <h2>Импорт шаблона формы</h2>
+    <p class="muted">
+        Загрузите JSON-шаблон, чтобы создать копию формы (с сущностями и всеми полями)
+        в выбранном отделе.
+    </p>
+    <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="action" value="import_template">
+        {% if import_template_form.non_field_errors %}
+            <div class="errors">{{ import_template_form.non_field_errors|join:", " }}</div>
+        {% endif %}
+        {% for field in import_template_form %}
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+                <div class="errors">{{ field.errors|join:", " }}</div>
+            {% endif %}
+        {% endfor %}
+        <button type="submit">Импортировать шаблон</button>
+    </form>
+</section>
+
+<section class="card">
+    <h2>Добавить поле в форму</h2>
+    <form method="post" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create_custom_field">
+        {% if custom_field_form.non_field_errors %}
+            <div class="errors">{{ custom_field_form.non_field_errors|join:", " }}</div>
+        {% endif %}
+        {% for field in custom_field_form %}
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+                <div class="errors">{{ field.errors|join:", " }}</div>
+            {% endif %}
+        {% endfor %}
+        <button type="submit">Сохранить поле</button>
+    </form>
+</section>
+
+<section class="card">
+    <h2>Добавить сущность</h2>
+    <form method="post" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create_entity">
+        {% if entity_form.non_field_errors %}
+            <div class="errors">{{ entity_form.non_field_errors|join:", " }}</div>
+        {% endif %}
+        {% for field in entity_form %}
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+                <div class="errors">{{ field.errors|join:", " }}</div>
+            {% endif %}
+        {% endfor %}
+        <button type="submit">Сохранить сущность</button>
+    </form>
+</section>
+
+<section class="card">
+    <h2>Добавить поле сущности</h2>
+    <form method="post" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create_entity_field">
+        {% if entity_field_form.non_field_errors %}
+            <div class="errors">{{ entity_field_form.non_field_errors|join:", " }}</div>
+        {% endif %}
+        {% for field in entity_field_form %}
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+                <div class="errors">{{ field.errors|join:", " }}</div>
+            {% endif %}
+        {% endfor %}
+        <button type="submit">Сохранить поле сущности</button>
+    </form>
+</section>
+
+<section class="card">
+    <h2>Текущие типы форм</h2>
+    {% if report_types %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Код</th>
+                    <th>Название</th>
+                    <th>Отдел</th>
+                    <th>Статус</th>
+                    <th>Описание</th>
+                    <th>Экспорт</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in report_types %}
+                    <tr>
+                        <td>{{ item.code }}</td>
+                        <td>{{ item.name }}</td>
+                        <td>{{ item.department.name }}</td>
+                        <td>{% if item.is_active %}Активна{% else %}Выключена{% endif %}</td>
+                        <td>{{ item.description|default:"-" }}</td>
+                        <td>
+                            <a href="{% url 'reports:export_form_template' item.id %}">
+                                Скачать JSON
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="muted">Типы форм пока не созданы.</p>
+    {% endif %}
+</section>
+
+<section class="card">
+    <h2>Сущности</h2>
+    {% if entities %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Тип формы</th>
+                    <th>Отдел</th>
+                    <th>Код</th>
+                    <th>Название</th>
+                    <th>Статус</th>
+                    <th>Описание</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entity in entities %}
+                    <tr>
+                        <td>{{ entity.report_type.code }}</td>
+                        <td>{{ entity.report_type.department.name }}</td>
+                        <td>{{ entity.code }}</td>
+                        <td>{{ entity.name }}</td>
+                        <td>{% if entity.is_active %}Активна{% else %}Выключена{% endif %}</td>
+                        <td>{{ entity.description|default:"-" }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="muted">Сущности пока не созданы.</p>
+    {% endif %}
+</section>
+
+<section class="card">
+    <h2>Поля форм</h2>
+    {% if custom_fields %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Тип формы</th>
+                    <th>Отдел</th>
+                    <th>Название</th>
+                    <th>Код</th>
+                    <th>Тип</th>
+                    <th>Обязательное</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for field in custom_fields %}
+                    <tr>
+                        <td>{{ field.report_type.code }}</td>
+                        <td>{{ field.report_type.department.name }}</td>
+                        <td>{{ field.name }}</td>
+                        <td>{{ field.code }}</td>
+                        <td>{{ field.get_field_type_display }}</td>
+                        <td>{% if field.is_required %}Да{% else %}Нет{% endif %}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="muted">Дополнительные поля пока не созданы.</p>
+    {% endif %}
+</section>
+
+<section class="card">
+    <h2>Поля сущностей</h2>
+    {% if entity_fields %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Тип формы</th>
+                    <th>Сущность</th>
+                    <th>Название</th>
+                    <th>Код</th>
+                    <th>Тип</th>
+                    <th>Обязательное</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for field in entity_fields %}
+                    <tr>
+                        <td>{{ field.entity.report_type.code }}</td>
+                        <td>{{ field.entity.code }}</td>
+                        <td>{{ field.name }}</td>
+                        <td>{{ field.code }}</td>
+                        <td>{{ field.get_field_type_display }}</td>
+                        <td>{% if field.is_required %}Да{% else %}Нет{% endif %}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="muted">Поля сущностей пока не созданы.</p>
+    {% endif %}
+</section>
+{% endblock %}

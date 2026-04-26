@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<section class="card">
+    <h1>{{ title }}</h1>
+    <form method="get">
+        <label for="type">Фильтр по типу формы</label>
+        <select id="type" name="type">
+            <option value="">Все типы</option>
+            {% for item in available_types %}
+                <option value="{{ item.code }}" {% if report_type_filter == item.code %}selected{% endif %}>
+                    {{ item.code }} — {{ item.name }}
+                </option>
+            {% endfor %}
+        </select>
+        <button type="submit">Применить фильтр</button>
+    </form>
+
+    {% if reports %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Дата</th>
+                    <th>Хост</th>
+                    <th>IP</th>
+                    <th>ОС</th>
+                    <th>Статус</th>
+                    <th>Тип формы</th>
+                    <th>Сущность</th>
+                    <th>Кто заполнил</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                    <tr>
+                        <td>{{ report.created_at|date:"d.m.Y H:i" }}</td>
+                        <td>{{ report.host_name }}</td>
+                        <td>{{ report.ip_address }}</td>
+                        <td>{{ report.os_version }}</td>
+                        <td>{{ report.get_status_display }}</td>
+                        <td>{{ report.report_type.code }}</td>
+                        <td>{% if report.entity %}{{ report.entity.code }}{% else %}-{% endif %}</td>
+                        <td>{{ report.submitted_by.username }}</td>
+                    </tr>
+                    {% if report.details %}
+                    <tr>
+                        <td colspan="8"><strong>Комментарий:</strong> {{ report.details }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if report.custom_data %}
+                    <tr>
+                        <td colspan="8">
+                            <strong>Дополнительные поля:</strong>
+                            {% for key, value in report.custom_data.items %}
+                                <span>{{ key }}: {{ value|default:"-" }}</span>{% if not forloop.last %}; {% endif %}
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% if report.entity_data %}
+                    <tr>
+                        <td colspan="8">
+                            <strong>Поля сущности:</strong>
+                            {% for key, value in report.entity_data.items %}
+                                <span>{{ key }}: {{ value|default:"-" }}</span>{% if not forloop.last %}; {% endif %}
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="muted">По выбранному фильтру отчетов не найдено.</p>
+    {% endif %}
+</section>
+{% endblock %}

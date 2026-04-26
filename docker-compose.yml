@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16
+    container_name: host_reporting_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: host_reporting
+      POSTGRES_USER: host_reporting
+      POSTGRES_PASSWORD: host_reporting
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+volumes:
+  pg_data:

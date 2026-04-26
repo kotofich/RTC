@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<section class="card">
+    <h1>{{ page_title }}</h1>
+    <p class="muted">
+        Основные поля соответствуют листу "ОС серверов".
+        После выбора "Роль/Функция" откроется подформа конкретной сущности.
+    </p>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="errors">{{ form.non_field_errors|join:", " }}</div>
+        {% endif %}
+
+        {% for field in form.base_bound_fields %}
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+                <div class="errors">{{ field.errors|join:", " }}</div>
+            {% endif %}
+        {% endfor %}
+
+        <div id="entity-subforms" style="margin-top: 16px;">
+            {% for section in form.entity_sections_bound %}
+                <section
+                    class="card entity-subform"
+                    data-entity-code="{{ section.code }}"
+                    data-entity-label="{{ section.label }}"
+                    style="display: none; margin: 12px 0 0; border: 1px dashed #cbd5e1;"
+                >
+                    <h3 style="margin-top: 0;">Подформа: {{ section.label }}</h3>
+                    {% if section.fields %}
+                        {% for field in section.fields %}
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                                <div class="errors">{{ field.errors|join:", " }}</div>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <p class="muted">Для этой сущности дополнительных полей нет.</p>
+                    {% endif %}
+                </section>
+            {% endfor %}
+        </div>
+
+        {% if not form.selected_entity_code %}
+            <p class="muted" id="entity-form-hint">Выберите "Роль/Функция", чтобы заполнить поля подформы.</p>
+        {% else %}
+            <p class="muted" id="entity-form-hint" style="display: none;">Выберите "Роль/Функция", чтобы заполнить поля подформы.</p>
+        {% endif %}
+
+        <button type="submit">{{ submit_label }}</button>
+    </form>
+</section>
+
+<script>
+    (function () {
+        const roleSelect = document.getElementById("{{ form.role_function.id_for_label }}");
+        const sections = document.querySelectorAll(".entity-subform");
+        const hint = document.getElementById("entity-form-hint");
+        const roleToEntity = {
+            "Jump-хосты": "jump_hosts",
+            "СУБД": "db_servers",
+            "Web-сервер": "web_servers",
+            "Веб-сервер": "web_servers",
+            "AAA": "aaa",
+            "AD": "ad",
+            "DNS-Серверы": "dns_servers",
+            "Web-прокси": "web_proxy",
+            "Веб-прокси": "web_proxy",
+            "NGFW|Routers|IPS|IDS": "ngfw_routers_ips_ids",
+            "Почтовые серверы": "mail_servers",
+            "Virtualization|Сontainerization": "virtualization_containerization",
+            "VDI": "vdi",
+            "VPN": "vpn",
+            "Антивирус": "antivirus",
+            "Иные СЗИ": "other_security"
+        };
+
+        function renderSubform() {
+            const roleValue = roleSelect ? roleSelect.value : "";
+            const selectedCode = roleToEntity[roleValue] || "";
+            sections.forEach((section) => {
+                section.style.display = section.dataset.entityCode === selectedCode ? "block" : "none";
+            });
+            if (hint) {
+                hint.style.display = selectedCode ? "none" : "block";
+            }
+        }
+
+        if (roleSelect) {
+            roleSelect.addEventListener("change", renderSubform);
+            renderSubform();
+        }
+    })();
+</script>
+{% endblock %}

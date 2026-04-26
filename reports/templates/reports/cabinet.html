@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Личный кабинет{% endblock %}
+
+{% block content %}
+<section class="card">
+    <h1>Личный кабинет</h1>
+    <p><a href="{% url 'reports:export_xlsx' %}">Экспорт в XLSX</a></p>
+    {% if readonly %}
+        <p class="muted">Режим администратора: только чтение отчетов.</p>
+    {% else %}
+        <p class="muted">Здесь отображаются только ваши отчеты. Можно создавать и редактировать строки.</p>
+        <p><a href="{% url 'reports:create_report' %}">Создать новый отчет</a></p>
+    {% endif %}
+</section>
+
+<section class="card">
+    <h2>Таблица отчетов</h2>
+    {% if reports %}
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Действие</th>
+                        <th>Информационная система (код из ПАП)</th>
+                        <th>Площадка размещения</th>
+                        <th>FQDN</th>
+                        <th>IP-адрес</th>
+                        <th>Версия ОС</th>
+                        <th>Сегмент</th>
+                        <th>Роль/Функция</th>
+                        <th>В домене?</th>
+                        <th>Доступ из интернета</th>
+                        <th>Публичный IP, DNS, порт, протокол, назначение</th>
+                        <th>Режим работы самого сервера</th>
+                        <th>Контакты ответственных сотрудников</th>
+                        <th>Критичность</th>
+                        <th>Нагрузка</th>
+                        <th>Статус жизненного цикла</th>
+                        <th>IP-адрес коллектора SIEM</th>
+                        <th>IP-адрес сканера уязвимостей</th>
+                        <th>Техническая возможность подключения к SIEM</th>
+                        <th>В какой SIEM?</th>
+                        {% if readonly %}
+                            <th>Автор</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for report in reports %}
+                        <tr>
+                            <td>
+                                {% if not readonly %}
+                                    <a href="{% url 'reports:edit_report' report.id %}">изменить</a>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>{{ report.info_system_code }}</td>
+                            <td>{{ report.deployment_site }}</td>
+                            <td>{{ report.fqdn }}</td>
+                            <td>{{ report.ip_address }}</td>
+                            <td>{{ report.os_version }}</td>
+                            <td>{{ report.segment }}</td>
+                            <td>{{ report.role_function|default:"-" }}</td>
+                            <td>{{ report.domain_info }}</td>
+                            <td>{{ report.internet_access|default:"-" }}</td>
+                            <td>{{ report.public_access_details|default:"-" }}</td>
+                            <td>{{ report.server_operation_mode|default:"-" }}</td>
+                            <td>{{ report.responsible_contacts|default:"-" }}</td>
+                            <td>{{ report.criticality|default:"-" }}</td>
+                            <td>{{ report.load_description|default:"-" }}</td>
+                            <td>{{ report.lifecycle_status|default:"-" }}</td>
+                            <td>{{ report.siem_collector_ip|default:"-" }}</td>
+                            <td>{{ report.vulnerability_scanner_ip|default:"-" }}</td>
+                            <td>{{ report.siem_connection_possible|default:"-" }}</td>
+                            <td>{{ report.siem_name|default:"-" }}</td>
+                            {% if readonly %}
+                                <td>{{ report.owner.username }}</td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="muted">Отчетов пока нет.</p>
+    {% endif %}
+</section>
+
+<section class="card">
+    <h2>Листы по сущностям</h2>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px;">
+        <a
+            href="{% url 'reports:cabinet' %}"
+            style="padding: 7px 10px; border-radius: 8px; text-decoration: none; border: 1px solid #d1d5db; {% if selected_sheet == 'all' %}background: #0f766e; color: #fff; border-color: #0f766e;{% else %}color: #1f2937;{% endif %}"
+        >
+            Все
+        </a>
+        {% for tab in sheet_tabs %}
+            <a
+                href="{% url 'reports:cabinet' %}?sheet={{ tab.code }}"
+                style="padding: 7px 10px; border-radius: 8px; text-decoration: none; border: 1px solid #d1d5db; {% if tab.active %}background: #0f766e; color: #fff; border-color: #0f766e;{% else %}color: #1f2937;{% endif %}"
+            >
+                {{ tab.label }} ({{ tab.count }})
+            </a>
+        {% endfor %}
+    </div>
+
+    {% if selected_sheet == "all" %}
+        <p class="muted">Выберите конкретный лист, чтобы увидеть таблицу по этой сущности.</p>
+    {% else %}
+        <h3 style="margin-top: 0;">{{ selected_sheet_label }}</h3>
+        {% if sheet_rows %}
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            {% for column in sheet_columns %}
+                                <th>{{ column.label }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in sheet_rows %}
+                            <tr>
+                                {% for value in row.values %}
+                                    <td>{{ value|default:"-" }}</td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="muted">Для этого листа строки пока отсутствуют.</p>
+        {% endif %}
+    {% endif %}
+</section>
+{% endblock %}

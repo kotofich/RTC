@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Главная{% endblock %}
+
+{% block content %}
+<section class="card" style="max-width: 680px;">
+    <h1>Система отчетности по ОС серверов</h1>
+    <p class="muted">
+        Главные поля формы синхронизированы с листом "ОС серверов".
+        Для работы с отчетами перейдите в личный кабинет.
+    </p>
+    <p><a href="{% url 'reports:cabinet' %}">Перейти в ЛК</a></p>
+    {% if not user.is_authenticated %}
+        <p><a href="{% url 'login' %}">Войти в систему</a></p>
+    {% endif %}
+</section>
+{% endblock %}
